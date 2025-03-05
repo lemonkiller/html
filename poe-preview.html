@@ -1,0 +1,480 @@
+<!DOCTYPE html><html lang="zh"><head><meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://code.jquery.com https://unpkg.com https://d3js.org https://threejs.org https://cdn.plot.ly https://stackpath.bootstrapcdn.com https://maps.googleapis.com https://cdn.tailwindcss.com https://ajax.googleapis.com https://kit.fontawesome.com https://cdn.datatables.net https://maxcdn.bootstrapcdn.com https://code.highcharts.com https://tako-static-assets-production.s3.amazonaws.com https://www.youtube.com https://fonts.googleapis.com https://fonts.gstatic.com https://pfst.cf2.poecdn.net https://puc.poecdn.net https://i.imgur.com https://wikimedia.org https://*.icons8.com https://*.giphy.com https://picsum.photos https://images.unsplash.com; frame-src 'self' https://www.youtube.com https://trytako.com; child-src 'self'; manifest-src 'self'; worker-src 'self'; upgrade-insecure-requests; block-all-mixed-content;">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RPG角色属性窗口</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+        
+        body {
+            background-color: #1a1a2e;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .character-window {
+            background-color: rgba(32, 32, 64, 0.9);
+            border: 3px solid #9d4edd;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(157, 78, 221, 0.5);
+            width: 100%;
+            max-width: 800px;
+            color: white;
+            overflow: hidden;
+        }
+        
+        .window-header {
+            background: linear-gradient(90deg, #4a00e0, #8e2de2);
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #9d4edd;
+        }
+        
+        .window-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+        }
+        
+        .window-content {
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+        }
+        
+        @media (min-width: 768px) {
+            .window-content {
+                flex-direction: row;
+            }
+        }
+        
+        .character-info {
+            flex: 1;
+            padding-right: 20px;
+        }
+        
+        .character-stats {
+            flex: 2;
+        }
+        
+        .avatar {
+            background-color: #2a2a4a;
+            border: 2px solid #c77dff;
+            border-radius: 5px;
+            width: 100%;
+            max-width: 200px;
+            height: 200px;
+            margin: 0 auto 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .avatar-image {
+            width: 100%;
+            height: 100%;
+            background-color: #464680;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .level-badge {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            background: linear-gradient(45deg, #ff9900, #ff5500);
+            padding: 5px 10px;
+            border-top-left-radius: 5px;
+            font-weight: bold;
+        }
+        
+        .character-name {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            color: #c77dff;
+            text-align: center;
+        }
+        
+        .character-class {
+            font-size: 1.2rem;
+            color: #ffaa00;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .stat-group {
+            margin-bottom: 20px;
+            background-color: rgba(42, 42, 74, 0.7);
+            border-radius: 5px;
+            padding: 15px;
+            border-left: 4px solid #7b2cbf;
+        }
+        
+        .stat-group-title {
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+            color: #c77dff;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            padding-bottom: 5px;
+        }
+        
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            padding: 5px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .stat-name {
+            color: #b8c0c2;
+        }
+        
+        .stat-value {
+            color: #ffffff;
+            font-weight: bold;
+        }
+        
+        .progress-bar {
+            height: 10px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            margin-top: 5px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            border-radius: 5px;
+        }
+        
+        .health .progress-fill {
+            background: linear-gradient(90deg, #ff3860, #ff0000);
+        }
+        
+        .mana .progress-fill {
+            background: linear-gradient(90deg, #3273dc, #209cee);
+        }
+        
+        .exp .progress-fill {
+            background: linear-gradient(90deg, #7CFC00, #32CD32);
+        }
+        
+        .equipment-slot {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            background-color: rgba(42, 42, 74, 0.7);
+            border-radius: 5px;
+            padding: 8px;
+        }
+        
+        .slot-icon {
+            width: 40px;
+            height: 40px;
+            background-color: #3a3a6a;
+            border: 1px solid #9d4edd;
+            border-radius: 5px;
+            margin-right: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #c77dff;
+            font-size: 20px;
+        }
+        
+        .slot-info {
+            flex: 1;
+        }
+        
+        .slot-name {
+            font-size: 0.8rem;
+            color: #b8c0c2;
+        }
+        
+        .item-name {
+            color: #ffcc00;
+            font-weight: bold;
+        }
+        
+        .element-icon {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-right: 5px;
+            vertical-align: middle;
+        }
+        
+        .fire { background-color: #ff4500; }
+        .ice { background-color: #00bfff; }
+        .thunder { background-color: #ffff00; }
+        .earth { background-color: #8b4513; }
+        
+        .window-tabs {
+            display: flex;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            background-color: #24243e;
+        }
+        
+        .tab {
+            padding: 10px 20px;
+            background-color: rgba(42, 42, 74, 0.7);
+            cursor: pointer;
+            transition: background-color 0.3s;
+            text-align: center;
+            flex: 1;
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .tab:last-child {
+            border-right: none;
+        }
+        
+        .tab.active {
+            background-color: rgba(92, 72, 174, 0.7);
+            border-bottom: 3px solid #9d4edd;
+        }
+        
+        .tab:hover {
+            background-color: rgba(92, 72, 174, 0.4);
+        }
+
+        .special-item {
+            color: #ff9900;
+        }
+
+        .rare-item {
+            color: #a335ee;
+        }
+    </style>
+</head>
+<body>
+    <div class="character-window">
+        <div class="window-header">
+            <div class="window-title">角色属性</div>
+            <div id="gold">金币: 1,542</div>
+        </div>
+        
+        <div class="window-content">
+            <div class="character-info">
+                <div class="avatar">
+                    <div class="avatar-image">
+                        <!-- 角色头像 -->
+                        <svg width="100" height="100" viewBox="0 0 100 100">
+                            <circle cx="50" cy="40" r="20" fill="#c77dff"></circle>
+                            <rect x="30" y="65" width="40" height="30" fill="#c77dff" rx="5"></rect>
+                            <circle cx="40" cy="35" r="4" fill="white"></circle>
+                            <circle cx="60" cy="35" r="4" fill="white"></circle>
+                            <path d="M40,50 Q50,60 60,50" stroke="white" fill="none" stroke-width="2"></path>
+                        </svg>
+                    </div>
+                    <div class="level-badge">LV 28</div>
+                </div>
+                
+                <div class="character-name">暗夜之刃</div>
+                <div class="character-class">暗影刺客</div>
+                
+                <div class="stat-group">
+                    <div class="stat-row health">
+                        <div class="stat-name">生命值</div>
+                        <div class="stat-value">3450/4200</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 82%;"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-row mana">
+                        <div class="stat-name">魔法值</div>
+                        <div class="stat-value">840/950</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 88%;"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-row exp">
+                        <div class="stat-name">经验值</div>
+                        <div class="stat-value">12,540/15,000</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 84%;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="character-stats">
+                <div class="stat-group">
+                    <div class="stat-group-title">基础属性</div>
+                    
+                    <div class="stat-row">
+                        <div class="stat-name">力量</div>
+                        <div class="stat-value">45 <span style="color: #00ff00;">(+3)</span></div>
+                    </div>
+                    
+                    <div class="stat-row">
+                        <div class="stat-name">敏捷</div>
+                        <div class="stat-value">92 <span style="color: #00ff00;">(+7)</span></div>
+                    </div>
+                    
+                    <div class="stat-row">
+                        <div class="stat-name">智力</div>
+                        <div class="stat-value">38 <span style="color: #ff0000;">(-2)</span></div>
+                    </div>
+                    
+                    <div class="stat-row">
+                        <div class="stat-name">体质</div>
+                        <div class="stat-value">65 <span style="color: #00ff00;">(+5)</span></div>
+                    </div>
+                    
+                    <div class="stat-row">
+                        <div class="stat-name">幸运</div>
+                        <div class="stat-value">25</div>
+                    </div>
+                </div>
+                
+                <div class="stat-group">
+                    <div class="stat-group-title">战斗属性</div>
+                    
+                    <div class="stat-row">
+                        <div class="stat-name">物理攻击</div>
+                        <div class="stat-value">340-412</div>
+                    </div>
+                    
+                    <div class="stat-row">
+                        <div class="stat-name">魔法攻击</div>
+                        <div class="stat-value">125-176</div>
+                    </div>
+                    
+                    <div class="stat-row">
+                        <div class="stat-name">物理防御</div>
+                        <div class="stat-value">245</div>
+                    </div>
+                    
+                    <div class="stat-row">
+                        <div class="stat-name">魔法防御</div>
+                        <div class="stat-value">185</div>
+                    </div>
+                    
+                    <div class="stat-row">
+                        <div class="stat-name">暴击率</div>
+                        <div class="stat-value">28%</div>
+                    </div>
+                    
+                    <div class="stat-row">
+                        <div class="stat-name">暴击伤害</div>
+                        <div class="stat-value">178%</div>
+                    </div>
+                    
+                    <div class="stat-row">
+                        <div class="stat-name">命中率</div>
+                        <div class="stat-value">95%</div>
+                    </div>
+                    
+                    <div class="stat-row">
+                        <div class="stat-name">闪避率</div>
+                        <div class="stat-value">18%</div>
+                    </div>
+                </div>
+                
+                <div class="stat-group">
+                    <div class="stat-group-title">元素抗性</div>
+                    
+                    <div class="stat-row">
+                        <div class="stat-name"><span class="element-icon fire"></span>火焰抗性</div>
+                        <div class="stat-value">25%</div>
+                    </div>
+                    
+                    <div class="stat-row">
+                        <div class="stat-name"><span class="element-icon ice"></span>冰霜抗性</div>
+                        <div class="stat-value">18%</div>
+                    </div>
+                    
+                    <div class="stat-row">
+                        <div class="stat-name"><span class="element-icon thunder"></span>雷电抗性</div>
+                        <div class="stat-value">-5%</div>
+                    </div>
+                    
+                    <div class="stat-row">
+                        <div class="stat-name"><span class="element-icon earth"></span>土系抗性</div>
+                        <div class="stat-value">10%</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-group" style="margin: 0 20px 20px;">
+            <div class="stat-group-title">装备</div>
+            
+            <div class="equipment-slot">
+                <div class="slot-icon">⚔️</div>
+                <div class="slot-info">
+                    <div class="slot-name">武器</div>
+                    <div class="item-name rare-item">死亡低语短刀</div>
+                </div>
+            </div>
+            
+            <div class="equipment-slot">
+                <div class="slot-icon">🛡️</div>
+                <div class="slot-info">
+                    <div class="slot-name">盔甲</div>
+                    <div class="item-name">暗影织布长袍</div>
+                </div>
+            </div>
+            
+            <div class="equipment-slot">
+                <div class="slot-icon">👑</div>
+                <div class="slot-info">
+                    <div class="slot-name">头盔</div>
+                    <div class="item-name">夜行者头巾</div>
+                </div>
+            </div>
+            
+            <div class="equipment-slot">
+                <div class="slot-icon">👢</div>
+                <div class="slot-info">
+                    <div class="slot-name">靴子</div>
+                    <div class="item-name special-item">疾风之靴</div>
+                </div>
+            </div>
+            
+            <div class="equipment-slot">
+                <div class="slot-icon">💍</div>
+                <div class="slot-info">
+                    <div class="slot-name">饰品</div>
+                    <div class="item-name">幸运石护符</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="window-tabs">
+            <div class="tab active">属性</div>
+            <div class="tab">技能</div>
+            <div class="tab">任务</div>
+            <div class="tab">社交</div>
+            <div class="tab">成就</div>
+        </div>
+    </div>
+
+    <script>
+        // 简单的标签切换功能
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                document.querySelectorAll('.tab').forEach(t => {
+                    t.classList.remove('active');
+                });
+                this.classList.add('active');
+            });
+        });
+    </script>
+
+
+</body></html>
